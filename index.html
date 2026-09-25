@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mark's Commit Log</title>
+<meta name="description" content="A git-log-styled portfolio timeline, one commit per shipped project.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f5ef;
+    --surface: #ffffff;
+    --surface-2: #efece2;
+    --border: #ddd7c6;
+    --text: #1c1d1f;
+    --text-dim: #6c6a5f;
+    --accent: #c46a26;
+    --accent-2: #2f7d6e;
+    --line: #d7d0bd;
+    --shadow: 0 1px 2px rgba(30,25,15,0.04), 0 8px 24px rgba(30,25,15,0.05);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14151a; --surface: #1b1c23; --surface-2: #21222b;
+      --border: #2d2f3a; --text: #e9e7df; --text-dim: #8b8b95;
+      --accent: #e8934f; --accent-2: #5fb3a0; --line: #33343f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14151a; --surface: #1b1c23; --surface-2: #21222b;
+    --border: #2d2f3a; --text: #e9e7df; --text-dim: #8b8b95;
+    --accent: #e8934f; --accent-2: #5fb3a0; --line: #33343f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); margin: 0; padding: 0; }
+  body {
+    color: var(--text);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  h1, h2, h3, .mono { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  a { color: inherit; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+  ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 236px 1fr;
+    align-items: start;
+    min-height: 100vh;
+  }
+
+  /* ---- sidebar ---- */
+  nav.side {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100dvh;
+    padding: 28px 18px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .brand .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-2) 22%, transparent);
+    flex-shrink: 0;
+  }
+  .navlinks { display: flex; flex-direction: column; gap: 2px; }
+  .navlinks a {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13.5px;
+    text-decoration: none;
+    color: var(--text-dim);
+    padding: 8px 10px;
+    border-radius: 7px;
+    border-left: 2px solid transparent;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .navlinks a svg { width: 15px; height: 15px; flex-shrink: 0; opacity: .8; }
+  .navlinks a:hover { color: var(--text); background: var(--surface-2); }
+  .navlinks a.active {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 9%, transparent);
+    border-left-color: var(--accent);
+  }
+  nav.side .foot {
+    margin-top: auto;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    font-family: "IBM Plex Mono", monospace;
+    line-height: 1.6;
+  }
+  nav.side .foot a { text-decoration: none; border-bottom: 1px solid var(--border); }
+  nav.side .foot a:hover { color: var(--accent); border-color: var(--accent); }
+
+  .theme-toggle {
+    display: flex; align-items: center; gap: 9px;
+    width: 100%;
+    font-family: "Public Sans", sans-serif;
+    font-size: 13px;
+    color: var(--text-dim);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--accent); }
+  .theme-toggle svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .theme-toggle .icon-dark { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-light { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-dark { display: block; }
+
+  /* mobile top bar */
+  .topbar { display: none; }
+  .topbar-theme {
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    margin-left: 4px;
+  }
+  .topbar-theme svg { width: 14px; height: 14px; }
+  .topbar-theme .icon-dark { display: none; }
+  :root[data-theme="dark"] .topbar-theme .icon-light { display: none; }
+  :root[data-theme="dark"] .topbar-theme .icon-dark { display: block; }
+
+  main {
+    padding: 40px 40px 56px;
+    max-width: 820px;
+  }
+  section { scroll-margin-top: 24px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: clamp(30px, 4vw, 42px);
+    line-height: 1.15;
+    margin: 0 0 14px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-size: 22px;
+    margin: 0 0 22px;
+    letter-spacing: -0.005em;
+  }
+  .lede {
+    color: var(--text-dim);
+    font-size: 16px;
+    max-width: 60ch;
+    line-height: 1.65;
+  }
+  .lede b { color: var(--text); font-weight: 600; }
+  .links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  .pillbtn {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 7px 13px;
+    border-radius: 7px;
+    transition: border-color .15s ease, color .15s ease;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .pillbtn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---- about ---- */
+  #about p { color: var(--text-dim); max-width: 62ch; font-size: 15.5px; line-height: 1.65; margin: 0 0 13px; }
+  #about p b { color: var(--text); font-weight: 600; }
+  .motto {
+    margin: 18px 0 22px;
+    padding: 14px 18px;
+    border-left: 2px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    border-radius: 0 8px 8px 0;
+    max-width: 56ch;
+  }
+  .motto p {
+    margin: 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 15px;
+    font-style: normal;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ---- stack ---- */
+  .stackgroups { display: flex; flex-direction: column; gap: 24px; }
+  .stackgroup .label { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; }
+  .chiprow { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+
+  /* ---- projects: commit graph of cards ---- */
+  .proj-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .proj-heading h2 { margin: 0; }
+  .proj-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sort-toggle {
+    display: inline-flex;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .sort-btn {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color .15s ease, background .15s ease;
+  }
+  .sort-btn:hover { color: var(--text); }
+  .sort-btn.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+
+  .proj-list {
+    position: relative;
+    padding-left: 34px;
+  }
+  .proj-list::before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: var(--line);
+  }
+  .commit-node {
+    position: relative;
+    padding-bottom: 32px;
+  }
+  .commit-node:last-child { padding-bottom: 0; }
+  .commit-node .node-dot {
+    position: absolute;
+    left: -34px;
+    top: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .commit-node .node-dot::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .commit-node.wip .node-dot { border-color: var(--accent-2); }
+  .commit-node.wip .node-dot::after { background: var(--accent-2); }
+  .commit-node .node-date {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.03em;
+    margin-bottom: 10px;
+    padding-top: 2px;
+  }
+  .commit-node.wip .node-date { color: var(--accent-2); }
+  .commit-node.future .node-dot { border-color: var(--line); border-style: dashed; }
+  .commit-node.future .node-dot::after { background: var(--line); }
+  .commit-node.future .node-date { color: var(--text-dim); }
+  .commit-node.future .proj-card {
+    border-style: dashed;
+    box-shadow: none;
+    background: transparent;
+  }
+  .commit-node.future .proj-future-body {
+    padding: 18px 22px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+  .proj-card {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .proj-media {
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    min-height: 220px;
+    overflow: hidden;
+  }
+  .proj-shot {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    display: block;
+  }
+  .proj-body { padding: 26px 28px; display: flex; flex-direction: column; }
+  .proj-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; }
+  .proj-num { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.06em; color: var(--text-dim); text-transform: uppercase; }
+  .proj-body h3 { font-size: 18px; margin: 6px 0 10px; }
+  .proj-body p { color: var(--text-dim); font-size: 14px; line-height: 1.65; margin: 0 0 16px; flex: 1; }
+  .proj-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+  .proj-tags .chip { font-size: 11px; padding: 4px 9px; box-shadow: none; }
+  .proj-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .proj-url { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; }
+  .proj-status {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    padding: 3px 9px;
+    border-radius: 5px;
+    letter-spacing: 0.03em;
+  }
+  .proj-status.shipped { color: var(--accent-2); background: color-mix(in srgb, var(--accent-2) 14%, transparent); }
+  .proj-status.wip { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .proj-kind {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    padding: 3px 9px;
+    border-radius: 5px;
+    letter-spacing: 0.03em;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .explore.disabled {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px dashed var(--border);
+    cursor: default;
+    pointer-events: none;
+  }
+  .explore {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    text-decoration: none;
+    background: var(--text);
+    color: var(--bg);
+    padding: 8px 14px;
+    border-radius: 7px;
+    transition: opacity .15s ease, gap .15s ease;
+  }
+  .explore:hover { opacity: .82; gap: 9px; }
+  .proj-cta-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .explore-source {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .explore-source:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* CSS-drawn app mockups (for projects without a live screenshot) */
+  .mock-window {
+    width: 100%;
+    max-width: 340px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #14151a;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  }
+  .mock-chrome {
+    display: flex; align-items: center; gap: 6px;
+    padding: 9px 12px;
+    background: #1b1c23;
+    border-bottom: 1px solid #2d2f3a;
+  }
+  .mock-chrome .d { width: 8px; height: 8px; border-radius: 50%; background: #3a3c47; }
+  .mock-url {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: #8b8b95;
+    margin-left: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .mock-body { padding: 18px; }
+  .mock-title { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: #8b8b95; letter-spacing: 0.04em; margin-bottom: 12px; }
+  .mock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mock-tile { background: #21222b; border: 1px solid #2d2f3a; border-radius: 8px; padding: 10px 12px; }
+  .mock-tile .num { font-family: "IBM Plex Mono", monospace; font-size: 17px; color: #e8934f; font-variant-numeric: tabular-nums; }
+  .mock-tile .lbl { font-family: "IBM Plex Mono", monospace; font-size: 9.5px; color: #6f717d; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 3px; }
+  .mock-tag {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 9.5px;
+    color: #5fb3a0;
+    background: rgba(95,179,160,0.12);
+    border: 1px solid rgba(95,179,160,0.3);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .mock-tag.amber { color: #e8934f; background: rgba(232,147,79,0.12); border-color: rgba(232,147,79,0.3); }
+  .mock-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #2d2f3a; font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+  .mock-row:last-child { border-bottom: none; }
+  .mock-row .lbl2 { color: #8b8b95; }
+  .mock-row .val { color: #e9e7df; font-variant-numeric: tabular-nums; }
+  .mock-row .val.neg { color: #e8934f; }
+  .mock-bal { font-family: "IBM Plex Mono", monospace; font-size: 22px; color: #e9e7df; font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+
+  /* ---- certifications ---- */
+  .cert-empty {
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: center;
+    color: var(--text-dim);
+  }
+  .cert-empty .mono { font-size: 12px; letter-spacing: 0.04em; }
+  .cert-empty p { font-size: 14px; margin: 8px 0 0; }
+
+  .cert-list { display: flex; flex-direction: column; gap: 12px; }
+  .cert-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .cert-badge {
+    width: 42px; height: 42px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cert-badge svg { width: 22px; height: 22px; }
+  .cert-main { flex: 1; min-width: 0; }
+  .cert-name { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+  .cert-issuer { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent-2); margin-bottom: 6px; }
+  .cert-note { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; margin: 0; }
+  .cert-verify {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--accent-2);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-2);
+    padding-bottom: 1px;
+    width: fit-content;
+  }
+  .cert-verify:hover { opacity: .8; }
+  .cert-verify .mono { color: var(--text-dim); font-weight: normal; }
+  .cert-meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+    flex-shrink: 0;
+    line-height: 1.7;
+    white-space: nowrap;
+  }
+  @media (max-width: 560px) {
+    .cert-card { flex-wrap: wrap; }
+    .cert-meta { text-align: left; }
+  }
+
+  /* ---- contact ---- */
+  .contact-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+  .copybtn {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13.5px;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    box-shadow: var(--shadow);
+  }
+  .copybtn:hover { border-color: var(--accent); }
+  .copybtn svg { width: 14px; height: 14px; opacity: .7; }
+  .copybtn.copied { color: var(--accent-2); border-color: var(--accent-2); }
+  .copybtn:disabled { opacity: .55; cursor: default; }
+  .copybtn:disabled:hover { border-color: var(--border); }
+  .social-btn {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13.5px;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 9px 14px;
+    border-radius: 8px;
+    color: var(--text);
+    text-decoration: none;
+    box-shadow: var(--shadow);
+    transition: border-color .15s ease;
+  }
+  .social-btn:hover { border-color: var(--accent); }
+  .social-btn svg { width: 15px; height: 15px; opacity: .85; flex-shrink: 0; }
+
+  footer.pagefoot {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+  }
+
+  @media (max-width: 860px) {
+    .proj-card { grid-template-columns: 1fr; }
+    .proj-media { min-height: 180px; }
+  }
+
+  @media (max-width: 760px) {
+    .shell { grid-template-columns: 1fr; }
+    nav.side { display: none; }
+    .topbar {
+      display: flex;
+      overflow-x: auto;
+      gap: 4px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: var(--bg);
+      z-index: 5;
+    }
+    .topbar a {
+      flex-shrink: 0;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12.5px;
+      text-decoration: none;
+      color: var(--text-dim);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+    .topbar a.active { color: var(--accent); border-color: var(--accent); }
+    main { padding: 28px 18px 60px; }
+    .proj-list { padding-left: 26px; }
+    .proj-list::before { left: 7px; }
+    .commit-node .node-dot { left: -26px; width: 16px; height: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="side" id="sideNav">
+    <div class="brand"><span class="dot"></span> mark.dev</div>
+    <div class="navlinks" id="navlinks">
+      <a href="#about" data-target="about" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6"/></svg>About</a>
+      <a href="#stack" data-target="stack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Stack</a>
+      <a href="#projects" data-target="projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>Projects</a>
+      <a href="#certifications" data-target="certifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/></svg>Certifications</a>
+      <a href="#contact" data-target="contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>Contact</a>
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark theme">
+      <svg class="icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19v2.4M4.2 4.2l1.7 1.7M18 18l1.7 1.7M2.5 12h2.4M19 12h2.4M4.2 19.8l1.7-1.7M18 6l1.7-1.7"/></svg>
+      <svg class="icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></svg>
+      <span id="themeLabel">Light mode</span>
+    </button>
+    <div class="foot">
+      HEAD -&gt; main<br>
+      <a href="https://github.com/malasadongegg" target="_blank" rel="noopener">github.com/malasadongegg</a>
+    </div>
+  </nav>
+
+  <div class="topbar" id="topbar">
+    <a href="#about" data-target="about" class="active">About</a>
+    <a href="#stack" data-target="stack">Stack</a>
+    <a href="#projects" data-target="projects">Projects</a>
+    <a href="#certifications" data-target="certifications">Certifications</a>
+    <a href="#contact" data-target="contact">Contact</a>
+    <button class="topbar-theme" id="themeToggleMobile" aria-label="Toggle light/dark theme">
+      <svg class="icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19v2.4M4.2 4.2l1.7 1.7M18 18l1.7 1.7M2.5 12h2.4M19 12h2.4M4.2 19.8l1.7-1.7M18 6l1.7-1.7"/></svg>
+      <svg class="icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></svg>
+    </button>
+  </div>
+
+  <main>
+    <section id="about">
+      <div class="eyebrow">01 &middot; profile</div>
+      <h1>Hi, I'm Mark.</h1>
+      <p class="lede">I build small, practical software end to end &mdash; usually solo, usually because I wanted the thing to exist. Lately that's meant an <b>AI usage tracker</b> people can embed on their profile, and a <b>personal finance app</b> I run on my own phone every day. I like tools that respect your data: local-first where possible, honest about what's estimated versus measured, and free of dark patterns.</p>
+      <p class="lede">Most of what I build falls into one of two buckets: school activities, or something I actually needed in my own day-to-day life. Both show up below &mdash; each project is tagged with which kind it is.</p>
+      <p class="lede">Self-taught, Windows-based, and comfortable across the stack &mdash; from SQL migrations and financial-engine logic up through React UI. I test on real devices instead of just simulators, and I'd rather ship something small and correct than something big and half-working.</p>
+      <blockquote class="motto">
+        <p>&ldquo;If you are tired, do it tired.&rdquo;</p>
+      </blockquote>
+      <div class="links">
+        <a class="pillbtn" href="#projects">See projects &rarr;</a>
+        <a class="pillbtn" href="https://github.com/malasadongegg" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </section>
+
+    <section id="stack" hidden>
+      <div class="eyebrow">02 &middot; toolbox</div>
+      <h2>Stack</h2>
+      <div class="stackgroups">
+        <div class="stackgroup">
+          <div class="label">Languages</div>
+          <div class="chiprow">
+            <span class="chip">TypeScript</span><span class="chip">JavaScript</span><span class="chip">SQL</span>
+          </div>
+        </div>
+        <div class="stackgroup">
+          <div class="label">Frontend</div>
+          <div class="chiprow">
+            <span class="chip">React</span><span class="chip">React Native / Expo</span><span class="chip">Vite</span><span class="chip">Tailwind CSS</span><span class="chip">Expo Router</span>
+          </div>
+        </div>
+        <div class="stackgroup">
+          <div class="label">Backend &amp; data</div>
+          <div class="chiprow">
+            <span class="chip">Node.js</span><span class="chip">Supabase</span><span class="chip">PostgreSQL</span><span class="chip">SQLite</span>
+          </div>
+        </div>
+        <div class="stackgroup">
+          <div class="label">Tooling &amp; infra</div>
+          <div class="chiprow">
+            <span class="chip">Git / GitHub</span><span class="chip">Vercel</span><span class="chip">EAS</span><span class="chip">pnpm workspaces</span><span class="chip">Vitest</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects" hidden>
+      <div class="eyebrow">git log --branches --graph</div>
+      <div class="proj-heading">
+        <h2>Projects</h2>
+        <div class="proj-controls">
+          <div class="sort-toggle" id="sortToggle" role="group" aria-label="Sort projects by date">
+            <button type="button" class="sort-btn active" data-order="desc">Newest first</button>
+            <button type="button" class="sort-btn" data-order="asc">Oldest first</button>
+          </div>
+          <div class="sort-toggle" id="visToggle" role="group" aria-label="Filter projects by repo visibility">
+            <button type="button" class="sort-btn active" data-vis="all">All</button>
+            <button type="button" class="sort-btn" data-vis="public">Public</button>
+            <button type="button" class="sort-btn" data-vis="private">Private</button>
+          </div>
+        </div>
+      </div>
+      <div class="proj-list" id="projList"></div>
+    </section>
+
+    <section id="certifications" hidden>
+      <div class="eyebrow">04 &middot; credentials</div>
+      <h2>Certifications</h2>
+      <div class="cert-list" id="certList"></div>
+    </section>
+
+    <section id="contact" hidden>
+      <div class="eyebrow">05 &middot; reach out</div>
+      <h2>Contact</h2>
+      <p class="lede">Best reached by email. Happy to talk about any of the projects above, or about building something new.</p>
+      <div class="contact-row">
+        <button class="copybtn" id="emailBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+          <span id="emailText">vpmark123@gmail.com</span>
+        </button>
+        <a class="social-btn" href="https://github.com/malasadongegg" target="_blank" rel="noopener">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span>github.com/malasadongegg</span>
+        </a>
+        <button class="copybtn" id="discordBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.076.076 0 0 0-.04.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          <span id="discordText">malasadongegg</span>
+        </button>
+      </div>
+    </section>
+
+    <footer class="pagefoot">HEAD -&gt; main &middot; last updated <span id="clock"></span></footer>
+  </main>
+</div>
+
+<script>
+  const projects = [
+    {
+      date: "2026-03-18",
+      year: "2026",
+      name: "Subscription Tracker",
+      status: "shipped",
+      kind: "personal",
+      description: "A Flask + PostgreSQL app for tracking recurring subscriptions: logs each one's price and billing cycle, flags what's due soon or overdue, and rolls everything up into a monthly cost total.",
+      tags: ["Python", "Flask", "PostgreSQL", "Supabase"],
+      repo: "https://github.com/malasadongegg/tryexpensivetracker",
+      urlLabel: "github.com/malasadongegg/tryexpensivetracker",
+      media: `
+        <div class="mock-window">
+          <div class="mock-chrome"><span class="d"></span><span class="d"></span><span class="d"></span><span class="mock-url">subscriptions</span></div>
+          <div class="mock-body">
+            <div class="mock-title">MONTHLY TOTAL</div>
+            <div class="mock-bal">&#8369;1,847.50</div>
+            <div class="mock-row"><span class="lbl2">Netflix</span><span class="val">due in 3 days</span></div>
+            <div class="mock-row"><span class="lbl2">iCloud+</span><span class="val">monthly</span></div>
+            <div class="mock-row"><span class="lbl2">Domain renewal</span><span class="val neg">overdue</span></div>
+            <span class="mock-tag amber">yearly &middot; monthly &middot; weekly</span>
+          </div>
+        </div>`
+    },
+    {
+      date: "2026-09-21",
+      year: "2026",
+      name: "TrackHour",
+      status: "shipped",
+      kind: "personal",
+      description: "A public, open-source Steam-style stats card for your AI usage. Imports ChatGPT/Claude history, tracks live sessions via a browser extension, and renders an embeddable card for your profile or README.",
+      tags: ["TypeScript", "React", "Vite", "Supabase", "Vercel"],
+      repo: "https://github.com/malasadongegg/TrackHour",
+      live: "https://trackhour-seven.vercel.app",
+      urlLabel: "trackhour-seven.vercel.app",
+      media: `<img class="proj-shot" src="screenshots/trackhour.png" alt="TrackHour landing page screenshot" loading="lazy">`
+    },
+    {
+      date: "2026-09-15",
+      year: "2026",
+      name: "Kwarta",
+      status: "wip",
+      kind: "personal",
+      description: "A personal finance app for daily use on iPhone: budgets, transactions, recurring bills, and a free 'Quick Log' Shortcut that appends expenses from the Lock Screen without opening the app.",
+      tags: ["Expo", "React Native", "TypeScript", "SQLite"],
+      repo: null,
+      urlLabel: "not public yet",
+      media: `
+        <div class="mock-window">
+          <div class="mock-chrome"><span class="d"></span><span class="d"></span><span class="d"></span><span class="mock-url">kwarta &middot; expo go</span></div>
+          <div class="mock-body">
+            <div class="mock-title">THIS MONTH</div>
+            <div class="mock-bal">&#8369;12,480.00</div>
+            <div class="mock-row"><span class="lbl2">Budget used</span><span class="val">64%</span></div>
+            <div class="mock-row"><span class="lbl2">Recurring bills</span><span class="val">4 upcoming</span></div>
+            <div class="mock-row"><span class="lbl2">Quick Log (today)</span><span class="val neg">&minus;&#8369;350.00</span></div>
+            <span class="mock-tag amber">local-first &middot; SQLite</span>
+          </div>
+        </div>`
+    },
+    {
+      date: "2026-09-22",
+      year: "2026",
+      name: "ISMSI",
+      status: "wip",
+      kind: "school",
+      description: "A capstone project: a role-based barangay incident management system for Barangay Bolacan, Bocaue, Bulacan. An admin command center for dispatch and case tracking, a field app for tanods with live location and escalation, and a resident portal for reporting incidents and requesting documents.",
+      tags: ["Django REST", "React", "Vite", "TypeScript", "MySQL"],
+      repo: "https://github.com/edevscode/ISMSI",
+      urlLabel: "github.com/edevscode/ISMSI",
+      media: `
+        <div class="mock-window">
+          <div class="mock-chrome"><span class="d"></span><span class="d"></span><span class="d"></span><span class="mock-url">ismsi &middot; barangay bolacan</span></div>
+          <div class="mock-body">
+            <div class="mock-title">INCIDENT QUEUE</div>
+            <div class="mock-row"><span class="lbl2">Tanod dispatched</span><span class="val">en route</span></div>
+            <div class="mock-row"><span class="lbl2">Document requests</span><span class="val">3 pending</span></div>
+            <div class="mock-row"><span class="lbl2">Reports today</span><span class="val">7</span></div>
+            <span class="mock-tag">admin &middot; tanod &middot; resident</span>
+          </div>
+        </div>`
+    },
+    {
+      date: "2026-02-25",
+      year: "2026",
+      name: "3022 Cafe Go",
+      status: "shipped",
+      kind: "school",
+      description: "A full-stack cafe management system: menu and inventory management, a customer ordering and cart flow, real-time order queue tracking, sales analytics, and a loyalty/feedback system.",
+      tags: ["Django REST", "React", "MySQL"],
+      repo: "https://github.com/edevscode/3022-Cafe-Go",
+      urlLabel: "github.com/edevscode/3022-Cafe-Go",
+      media: `
+        <div class="mock-window">
+          <div class="mock-chrome"><span class="d"></span><span class="d"></span><span class="d"></span><span class="mock-url">3022 cafe go</span></div>
+          <div class="mock-body">
+            <div class="mock-title">ORDER QUEUE</div>
+            <div class="mock-row"><span class="lbl2">#014 Iced Latte x2</span><span class="val">preparing</span></div>
+            <div class="mock-row"><span class="lbl2">#015 Croffle</span><span class="val">ready</span></div>
+            <div class="mock-row"><span class="lbl2">Ingredients low</span><span class="val neg">oat milk</span></div>
+            <span class="mock-tag amber">menu &middot; cart &middot; loyalty</span>
+          </div>
+        </div>`
+    },
+    {
+      date: "2026-06-21",
+      year: "2026",
+      name: "DYCI E-Vote",
+      status: "shipped",
+      kind: "school",
+      description: "A classroom election system built for a school course: runs student elections with year-level filtering and configurable voting windows.",
+      tags: ["JavaScript", "Node.js"],
+      repo: null,
+      urlLabel: "private repo",
+      media: `
+        <div class="mock-window">
+          <div class="mock-chrome"><span class="d"></span><span class="d"></span><span class="d"></span><span class="mock-url">dyci e-vote</span></div>
+          <div class="mock-body">
+            <div class="mock-title">CLASSROOM ELECTION</div>
+            <div class="mock-row"><span class="lbl2">Year level</span><span class="val">Grade 11</span></div>
+            <div class="mock-row"><span class="lbl2">Voting window</span><span class="val">open</span></div>
+            <div class="mock-row"><span class="lbl2">Votes cast</span><span class="val">142</span></div>
+            <span class="mock-tag">year filter &middot; timed voting</span>
+          </div>
+        </div>`
+    },
+    {
+      date: "2026-09-25",
+      year: "2026",
+      name: "CallMeHao",
+      status: "wip",
+      kind: "school",
+      description: "A Flutter app that matches users by skill tier for live voice/video calls to practice speaking, with an AI chat practice mode, per-session speaking-time analytics, and a leaderboard.",
+      tags: ["Flutter", "FlutterFlow", "Supabase", "Gemini AI"],
+      repo: null,
+      urlLabel: "private repo",
+      media: `
+        <div class="mock-window">
+          <div class="mock-chrome"><span class="d"></span><span class="d"></span><span class="d"></span><span class="mock-url">callmehao</span></div>
+          <div class="mock-body">
+            <div class="mock-title">MATCHED BY LEVEL TIER</div>
+            <div class="mock-row"><span class="lbl2">Speaking time</span><span class="val">62%</span></div>
+            <div class="mock-row"><span class="lbl2">Leaderboard rank</span><span class="val">#12</span></div>
+            <div class="mock-row"><span class="lbl2">AI practice</span><span class="val">available</span></div>
+            <span class="mock-tag amber">live calls &middot; AI chat</span>
+          </div>
+        </div>`
+    },
+    {
+      date: "2026-09-24",
+      year: "2026",
+      name: "QuickDrop",
+      status: "shipped",
+      kind: "personal",
+      description: "An anonymous, temporary, cross-device sharing platform. No accounts, no permanent storage: open quickd.xyz on two devices, share a file, text, or a live real-time room between them, and it's gone when the timer runs out.",
+      tags: ["React", "TypeScript", "Vite", "Django", "Django Channels", "PostgreSQL", "Redis"],
+      repo: "https://github.com/malasadongegg/Quickdrop",
+      live: "https://quickd.xyz",
+      urlLabel: "quickd.xyz",
+      media: `<img class="proj-shot" src="screenshots/quickdrop.png" alt="QuickDrop landing page screenshot" loading="lazy">`
+    }
+    // Add the next project here: { date, year, name, status, kind, description, tags: [], repo, urlLabel, media }
+  ];
+
+  const list = document.getElementById("projList");
+
+  function renderProjects(order, vis) {
+    list.innerHTML = "";
+    const filtered = projects.filter(p => {
+      if (vis === "public") return !!p.repo;
+      if (vis === "private") return !p.repo;
+      return true;
+    });
+    const sorted = filtered.slice().sort((a, b) =>
+      order === "asc" ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)
+    );
+    sorted.forEach((p, i) => {
+      const wrap = document.createElement("div");
+      wrap.className = "commit-node" + (p.status === "wip" ? " wip" : "");
+      const statusLabel = p.status === "shipped" ? "shipped" : "in development";
+      let cta;
+      if (p.live) {
+        cta = `<a class="explore" href="${p.live}" target="_blank" rel="noopener">Visit Site &rarr;</a>`;
+        if (p.repo) cta += `<a class="explore-source" href="${p.repo}" target="_blank" rel="noopener">Source</a>`;
+      } else if (p.repo) {
+        cta = `<a class="explore" href="${p.repo}" target="_blank" rel="noopener">Explore Build &rarr;</a>`;
+      } else {
+        cta = `<span class="explore disabled">${p.urlLabel === "private repo" ? "Private repo" : "Not public yet"}</span>`;
+      }
+      wrap.innerHTML = `
+        <div class="node-dot"></div>
+        <div class="node-date">${p.date}</div>
+        <div class="proj-card">
+          <div class="proj-media">${p.media}</div>
+          <div class="proj-body">
+            <div class="proj-top">
+              <span class="proj-num">Project 0${i + 1}</span>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <span class="proj-status ${p.status}">${statusLabel}</span>
+                <span class="proj-kind">${p.kind === "school" ? "school project" : "personal"}</span>
+                <span class="proj-kind">${p.repo ? "public" : "private"}</span>
+              </div>
+            </div>
+            <h3>${p.name}</h3>
+            <p>${p.description}</p>
+            <div class="proj-tags">${p.tags.map(t => `<span class="chip">${t}</span>`).join("")}</div>
+            <div class="proj-foot">
+              <span class="proj-url">${p.urlLabel}</span>
+              <div class="proj-cta-group">${cta}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      list.appendChild(wrap);
+    });
+
+    const future = document.createElement("div");
+    future.className = "commit-node future";
+    future.innerHTML = `
+      <div class="node-dot"></div>
+      <div class="node-date">next</div>
+      <div class="proj-card"><div class="proj-future-body">&hellip; more commits coming</div></div>
+    `;
+    list.appendChild(future);
+  }
+
+  let currentOrder = "desc";
+  let currentVis = "all";
+
+  renderProjects(currentOrder, currentVis);
+
+  document.querySelectorAll('#sortToggle .sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#sortToggle .sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      currentOrder = btn.dataset.order;
+      renderProjects(currentOrder, currentVis);
+    });
+  });
+
+  document.querySelectorAll('#visToggle .sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#visToggle .sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      currentVis = btn.dataset.vis;
+      renderProjects(currentOrder, currentVis);
+    });
+  });
+
+  const certifications = [
+    {
+      date: "2025-11-29",
+      name: "HCIA-Security V4.0 — Course Completion",
+      issuer: "Huawei ICT Academy",
+      note: "Completed the study and exam for the HCIA-Security V4.0 course. This certifies course completion, not the official Huawei HCIA-Security certification exam.",
+      code: "EBG20251129001950"
+    },
+    {
+      date: "2025-02-15",
+      name: "Word 2019 Associate",
+      issuer: "Microsoft Office Specialist",
+      note: "Certified as a Microsoft Office Specialist for Word 2019 by demonstrating proficiency in the full range of Word document creation and formatting tasks.",
+      code: "mxNE-uTbz",
+      verifyUrl: "https://verify.certiport.com",
+      verifyHint: "enter ID mxNE-uTbz"
+    },
+    {
+      date: "2024-12-18",
+      name: "Database Foundations",
+      issuer: "Oracle Academy",
+      note: "Award of Final Exam Completion for satisfactory completion of the Database Foundations course final exam.",
+      code: null
+    },
+    {
+      date: "2023-12-12",
+      name: "Networking Basics",
+      issuer: "Cisco Networking Academy",
+      note: "Student-level credential covering network communication concepts, Ethernet, IPv4/IPv6 addressing, routing, and securely configuring a wireless router and client.",
+      code: null
+    },
+    {
+      date: "2023-12-10",
+      name: "Networking Devices and Initial Configuration",
+      issuer: "Cisco Networking Academy",
+      note: "Student-level credential covering hierarchical network design, subnetting, ARP, DNS/DHCP, transport-layer protocols, and building a network with Cisco IOS.",
+      code: null
+    },
+    {
+      date: "2023-12-10",
+      name: "Computer Hardware Basics",
+      issuer: "Cisco Networking Academy",
+      note: "Student-level credential covering PC component installation and repair, device maintenance, laptop and mobile device features, and safety standards.",
+      code: null
+    },
+    {
+      date: "2023-12-08",
+      name: "Java Fundamentals",
+      issuer: "Oracle Academy",
+      note: "Award of Final Exam Completion for satisfactory completion of the Java Fundamentals course final exam.",
+      code: null
+    }
+    // Add the next certificate here: { date, name, issuer, note, code }
+  ];
+
+  const certList = document.getElementById("certList");
+  certifications
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .forEach(c => {
+      const card = document.createElement("div");
+      card.className = "cert-card";
+      card.innerHTML = `
+        <div class="cert-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/></svg>
+        </div>
+        <div class="cert-main">
+          <div class="cert-name">${c.name}</div>
+          <div class="cert-issuer">${c.issuer}</div>
+          <p class="cert-note">${c.note}</p>
+          ${c.verifyUrl ? `<a class="cert-verify" href="${c.verifyUrl}" target="_blank" rel="noopener">Verify &rarr; <span class="mono">${c.verifyHint || ""}</span></a>` : ""}
+        </div>
+        <div class="cert-meta">Issued ${c.date}${c.code ? `<br>${c.code}` : ""}</div>
+      `;
+      certList.appendChild(card);
+    });
+
+  // tabbed sections
+  const navAnchors = [...document.querySelectorAll('#navlinks a, #topbar a[data-target]')];
+  const sections = [...document.querySelectorAll('main section')];
+  const validIds = sections.map(s => s.id);
+
+  function showSection(id) {
+    if (!validIds.includes(id)) id = 'about';
+    sections.forEach(s => { s.hidden = s.id !== id; });
+    navAnchors.forEach(a => a.classList.toggle('active', a.dataset.target === id));
+    window.scrollTo(0, 0);
+  }
+
+  navAnchors.forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = a.dataset.target;
+      showSection(id);
+      try { history.replaceState(null, '', '#' + id); } catch (e2) {}
+    });
+  });
+
+  document.querySelectorAll('main a[href^="#"]').forEach(a => {
+    if (navAnchors.includes(a)) return;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = a.getAttribute('href').slice(1);
+      showSection(id);
+      try { history.replaceState(null, '', '#' + id); } catch (e2) {}
+    });
+  });
+
+  showSection((location.hash || '#about').slice(1));
+
+  // theme toggle
+  function currentTheme() {
+    const explicit = document.documentElement.getAttribute('data-theme');
+    if (explicit) return explicit;
+    try {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch (e) { return 'light'; }
+  }
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('portfolio-theme', t); } catch (e) {}
+    const label = document.getElementById('themeLabel');
+    if (label) label.textContent = t === 'dark' ? 'Dark mode' : 'Light mode';
+  }
+  try {
+    const saved = localStorage.getItem('portfolio-theme');
+    if (saved === 'dark' || saved === 'light') setTheme(saved);
+    else setTheme(currentTheme());
+  } catch (e) { setTheme(currentTheme()); }
+
+  function toggleTheme() {
+    setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  }
+  document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+  document.getElementById('themeToggleMobile')?.addEventListener('click', toggleTheme);
+
+  function wireCopyButton(btnId, textId) {
+    const btn = document.getElementById(btnId);
+    const label = document.getElementById(textId);
+    btn?.addEventListener('click', async () => {
+      const text = label.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (err) {
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(label);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch (e2) {}
+      }
+      btn.classList.add('copied');
+      label.textContent = 'copied to clipboard';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        label.textContent = text;
+      }, 1600);
+    });
+  }
+  wireCopyButton('emailBtn', 'emailText');
+  wireCopyButton('discordBtn', 'discordText');
+
+  try {
+    document.getElementById('clock').textContent = new Date().toISOString().slice(0, 10);
+  } catch (e) {}
+</script>
+</body>
+</html>
