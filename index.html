@@ -909,6 +909,7 @@
       description: "A Windows radial-wheel file utility: Shift-drag a file in Explorer and a wheel of actions appears. Image tools (remove background, redact, annotate), PDF editing, FFmpeg media trimming, ZIP and Office conversions, all run locally. Released as a beta installer.",
       tags: ["Electron", "React", "TypeScript", "FFmpeg", ".NET"],
       repo: "https://github.com/malasadongegg/Twirly",
+      download: "https://github.com/malasadongegg/Twirly/releases/download/v0.1.0-beta.2/Twirly-Setup-0.1.0-beta.2.exe",
       urlLabel: "github.com/malasadongegg/Twirly",
       media: `<img class="proj-shot" src="screenshots/twirly.png" alt="Twirly radial action wheel screenshot" loading="lazy">`
     },
@@ -986,9 +987,10 @@
       status: "wip",
       kind: "personal",
       description: "Save a public X/Twitter image or video post as a single attributed PNG or MP4. An iPhone Share Sheet Shortcut sends the link to an Express job API that composes the result with Sharp and FFmpeg. Tested against real rendered media.",
-      tags: ["TypeScript", "React", "Vite", "Tailwind CSS", "Express", "FFmpeg"],
+      tags: ["TypeScript", "React", "Vite", "Tailwind CSS", "Express", "FFmpeg", "Vercel"],
       repo: null,
-      urlLabel: "private repo",
+      live: "https://frame-post-steel.vercel.app",
+      urlLabel: "frame-post-steel.vercel.app",
       media: `
         <div class="mock-window">
           <div class="mock-chrome"><span class="d"></span><span class="d"></span><span class="d"></span><span class="mock-url">postframe &middot; job api</span></div>
@@ -1048,6 +1050,7 @@
         if (p.repo) cta += `<a class="explore-source" href="${p.repo}" target="_blank" rel="noopener">Source</a>`;
       } else if (p.repo) {
         cta = `<a class="explore" href="${p.repo}" target="_blank" rel="noopener">Explore Build &rarr;</a>`;
+        if (p.download) cta += `<a class="explore-source" href="${p.download}" rel="noopener">Download</a>`;
       } else {
         cta = `<span class="explore disabled">${p.urlLabel === "private repo" ? "Private repo" : "Not public yet"}</span>`;
       }
