@@ -1040,7 +1040,7 @@
           <div class="proj-media">${p.media}</div>
           <div class="proj-body">
             <div class="proj-top">
-              <span class="proj-num">Project 0${i + 1}</span>
+              <span class="proj-num">Project ${String(i + 1).padStart(2, "0")}</span>
               <div style="display:flex; gap:6px; flex-wrap:wrap;">
                 <span class="proj-status ${p.status}">${statusLabel}</span>
                 <span class="proj-kind">${p.kind === "school" ? "school project" : "personal"}</span>
