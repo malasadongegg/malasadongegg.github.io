@@ -1205,6 +1205,7 @@
   });
 
   showSection((location.hash || '#about').slice(1));
+  window.addEventListener('hashchange', () => showSection((location.hash || '#about').slice(1)));
 
   // theme toggle
   function currentTheme() {
