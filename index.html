@@ -54,6 +54,10 @@
   img { max-width: 100%; }
   [hidden] { display: none !important; }
   ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
 
   .shell {
     display: grid;
