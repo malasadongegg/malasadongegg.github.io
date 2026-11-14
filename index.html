@@ -1236,10 +1236,14 @@
     const btn = document.getElementById(btnId);
     const label = document.getElementById(textId);
     btn?.addEventListener('click', async () => {
+      if (btn.classList.contains('copied')) return;
       const text = label.textContent;
+      let copied = false;
       try {
         await navigator.clipboard.writeText(text);
-      } catch (err) {
+        copied = true;
+      } catch (err) {}
+      if (!copied) {
         try {
           const range = document.createRange();
           range.selectNodeContents(label);
@@ -1247,6 +1251,7 @@
           sel.removeAllRanges();
           sel.addRange(range);
         } catch (e2) {}
+        return;
       }
       btn.classList.add('copied');
       label.textContent = 'copied to clipboard';
