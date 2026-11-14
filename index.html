@@ -1217,6 +1217,7 @@
   function setTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     try { localStorage.setItem('portfolio-theme', t); } catch (e) {}
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#14151a' : '#f7f5ef');
     const label = document.getElementById('themeLabel');
     if (label) label.textContent = t === 'dark' ? 'Dark mode' : 'Light mode';
   }
