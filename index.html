@@ -54,6 +54,10 @@
   img { max-width: 100%; }
   [hidden] { display: none !important; }
   ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
 
   .shell {
     display: grid;
@@ -1205,6 +1209,7 @@
   });
 
   showSection((location.hash || '#about').slice(1));
+  window.addEventListener('hashchange', () => showSection((location.hash || '#about').slice(1)));
 
   // theme toggle
   function currentTheme() {
@@ -1217,6 +1222,7 @@
   function setTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     try { localStorage.setItem('portfolio-theme', t); } catch (e) {}
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#14151a' : '#f7f5ef');
     const label = document.getElementById('themeLabel');
     if (label) label.textContent = t === 'dark' ? 'Dark mode' : 'Light mode';
   }
@@ -1236,10 +1242,14 @@
     const btn = document.getElementById(btnId);
     const label = document.getElementById(textId);
     btn?.addEventListener('click', async () => {
+      if (btn.classList.contains('copied')) return;
       const text = label.textContent;
+      let copied = false;
       try {
         await navigator.clipboard.writeText(text);
-      } catch (err) {
+        copied = true;
+      } catch (err) {}
+      if (!copied) {
         try {
           const range = document.createRange();
           range.selectNodeContents(label);
@@ -1247,6 +1257,7 @@
           sel.removeAllRanges();
           sel.addRange(range);
         } catch (e2) {}
+        return;
       }
       btn.classList.add('copied');
       label.textContent = 'copied to clipboard';
@@ -1260,7 +1271,8 @@
   wireCopyButton('discordBtn', 'discordText');
 
   try {
-    document.getElementById('clock').textContent = new Date().toISOString().slice(0, 10);
+    const modified = new Date(document.lastModified);
+    if (!isNaN(modified)) document.getElementById('clock').textContent = modified.toISOString().slice(0, 10);
   } catch (e) {}
 </script>
 </body>
