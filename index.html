@@ -1266,7 +1266,8 @@
   wireCopyButton('discordBtn', 'discordText');
 
   try {
-    document.getElementById('clock').textContent = new Date().toISOString().slice(0, 10);
+    const modified = new Date(document.lastModified);
+    if (!isNaN(modified)) document.getElementById('clock').textContent = modified.toISOString().slice(0, 10);
   } catch (e) {}
 </script>
 </body>
